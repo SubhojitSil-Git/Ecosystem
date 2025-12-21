@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EcoBuilder Sandbox</title>
+    <link rel="stylesheet" href="gard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <div id="ui-layer">
+        <header>
+            <h1>🌍 EcoBuilder</h1>
+            <button id="clear-btn" class="danger-btn">🗑️ Clear</button>
+        </header>
+
+        <div id="instruction-toast">Select an item below, then tap the grass to place it!</div>
+
+        <div class="toolbar-wrapper">
+            <div class="toolbar">
+                <div class="tool-btn active" data-type="oak">🌳<br>Oak</div>
+                <div class="tool-btn" data-type="pine">🌲<br>Pine</div>
+                <div class="tool-btn" data-type="palm">🌴<br>Palm</div>
+                
+                <div class="tool-btn" data-type="pond">💧<br>Pond</div>
+                <div class="tool-btn" data-type="waterfall">🌊<br>Falls</div>
+
+                <div class="tool-btn" data-type="fox">🦊<br>Fox</div>
+                <div class="tool-btn" data-type="rabbit">🐇<br>Rabbit</div>
+
+                <div class="tool-btn" data-type="rock">🪨<br>Rock</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="gard.js"></script>
+</body>
+</html>
