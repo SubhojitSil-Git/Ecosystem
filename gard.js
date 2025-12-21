@@ -1,79 +1,51 @@
-// gard.js - Survival Ecosystem
+// gard.js - Interactive Ecosystem
 
-// --- 1. SETUP ---
+// --- 1. Scene Setup & Config ---
 const scene = new THREE.Scene();
-scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
+scene.fog = new THREE.FogExp2(0x87CEEB, 0.015);
 scene.background = new THREE.Color(0x87CEEB);
 
-const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 30, 45);
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 25, 50);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.getElementById('canvas-container').appendChild(renderer.domElement);
 
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-controls.maxPolarAngle = Math.PI / 2 - 0.1;
+controls.maxPolarAngle = Math.PI / 2 - 0.05; // Lock above ground
+controls.minDistance = 10;
+controls.maxDistance = 100;
 
-// --- 2. LIGHTING & DAY/NIGHT CYCLE ---
+// --- 2. Lighting ---
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambientLight);
 
 const sunLight = new THREE.DirectionalLight(0xfff0dd, 1.2);
 sunLight.position.set(50, 80, 50);
 sunLight.castShadow = true;
-sunLight.shadow.mapSize.set(2048, 2048);
+sunLight.shadow.mapSize.width = 2048;
+sunLight.shadow.mapSize.height = 2048;
 scene.add(sunLight);
 
-let isNight = false;
-let gameTime = 0;
-const CYCLE_DURATION = 60; // seconds per cycle
-
-function updateDayNight(dt) {
-    gameTime += dt;
-    const cyclePos = (gameTime % CYCLE_DURATION) / CYCLE_DURATION;
-    
-    isNight = cyclePos > 0.5;
-
-    // Sun movement
-    const angle = cyclePos * Math.PI * 2;
-    sunLight.position.y = Math.sin(angle) * 80;
-    sunLight.position.x = Math.cos(angle) * 80;
-
-    // Color Transitions
-    if (isNight) {
-        scene.background.lerp(new THREE.Color(0x1a237e), 0.05); // Dark Blue
-        scene.fog.color.lerp(new THREE.Color(0x1a237e), 0.05);
-        ambientLight.intensity = THREE.MathUtils.lerp(ambientLight.intensity, 0.1, 0.05);
-        sunLight.intensity = THREE.MathUtils.lerp(sunLight.intensity, 0, 0.05);
-        document.getElementById('time-display').innerText = "🌙 NIGHT";
-    } else {
-        scene.background.lerp(new THREE.Color(0x87CEEB), 0.05); // Sky Blue
-        scene.fog.color.lerp(new THREE.Color(0x87CEEB), 0.05);
-        ambientLight.intensity = THREE.MathUtils.lerp(ambientLight.intensity, 0.7, 0.05);
-        sunLight.intensity = THREE.MathUtils.lerp(sunLight.intensity, 1.2, 0.05);
-        document.getElementById('time-display').innerText = "☀️ DAY";
-    }
-
-    // Wolf Spawning Logic
-    handleNightSpawns();
-}
-
-// --- 3. ENVIRONMENT (Vegetation Preserved) ---
+// --- 3. The Living Ground (Your Requested Code) ---
 const groundGroup = new THREE.Group();
 scene.add(groundGroup);
 
-const ground = new THREE.Mesh(
-    new THREE.CircleGeometry(120, 64),
+// Main floor
+const groundMesh = new THREE.Mesh(
+    new THREE.CircleGeometry(150, 64),
     new THREE.MeshStandardMaterial({ color: 0x5aa85a, roughness: 1 })
 );
-ground.rotation.x = -Math.PI / 2;
-ground.receiveShadow = true;
-groundGroup.add(ground);
+groundMesh.rotation.x = -Math.PI / 2;
+groundMesh.receiveShadow = true;
+groundGroup.add(groundMesh);
 
+// Vegetation System (Grass & Flowers - Preserved)
 const vegetation = [];
 function plantVegetation() {
     const geoGrass = new THREE.ConeGeometry(0.15, 0.8, 4);
@@ -85,514 +57,274 @@ function plantVegetation() {
         const r = 3 + Math.random() * 80;
         const x = Math.cos(angle) * r;
         const z = Math.sin(angle) * r;
+
         let mesh;
         if (Math.random() > 0.9) {
-            mesh = new THREE.Mesh(geoFlower, new THREE.MeshStandardMaterial({ color: flowerColors[Math.floor(Math.random() * flowerColors.length)] }));
+            // Flower
+            mesh = new THREE.Mesh(
+                geoFlower,
+                new THREE.MeshStandardMaterial({ 
+                    color: flowerColors[Math.floor(Math.random() * flowerColors.length)] 
+                })
+            );
             mesh.position.y = 0.4;
         } else {
-            mesh = new THREE.Mesh(geoGrass, new THREE.MeshStandardMaterial({ color: 0x4a9c4a }));
+            // Grass
+            mesh = new THREE.Mesh(
+                geoGrass,
+                new THREE.MeshStandardMaterial({ color: 0x4a9c4a })
+            );
             mesh.position.y = 0.4;
         }
+        
         mesh.position.set(x, mesh.position.y, z);
         mesh.rotation.y = Math.random() * Math.PI;
         mesh.rotation.x = (Math.random() - 0.5) * 0.4;
+        mesh.castShadow = true;
         mesh.receiveShadow = true;
-        mesh.userData = { baseRot: mesh.rotation.clone(), phase: Math.random() * 10, speed: 0.5 + Math.random() };
+        
+        // Custom data for wind animation
+        mesh.userData = { 
+            baseRot: mesh.rotation.clone(), 
+            phase: Math.random() * 10,
+            speed: 0.5 + Math.random() 
+        };
+        
         groundGroup.add(mesh);
         vegetation.push(mesh);
     }
 }
 plantVegetation();
 
-// --- 4. GAME OBJECTS & BUILDERS ---
-const entities = []; // All interactive items
-const animals = [];  // AI agents
-const nightKills = { count: 0, resetTime: 0 };
+// --- 4. Interactive Object Builders ---
 
+// Materials Cache
 const mats = {
     wood: new THREE.MeshStandardMaterial({ color: 0x8B4513 }),
-    leaf: new THREE.MeshStandardMaterial({ color: 0x228B22 }),
+    leafOak: new THREE.MeshStandardMaterial({ color: 0x228B22 }),
+    leafPine: new THREE.MeshStandardMaterial({ color: 0x006400 }),
+    leafPalm: new THREE.MeshStandardMaterial({ color: 0x32CD32 }),
     water: new THREE.MeshStandardMaterial({ color: 0x00BFFF, transparent: true, opacity: 0.7 }),
-    stone: new THREE.MeshStandardMaterial({ color: 0x808080 }),
-    orange: new THREE.MeshStandardMaterial({ color: 0xff6b00 }), // Carrot/Fox
-    white: new THREE.MeshStandardMaterial({ color: 0xffffff }),
-    gray: new THREE.MeshStandardMaterial({ color: 0x95a5a6 }), // Sheep
-    darkGray: new THREE.MeshStandardMaterial({ color: 0x2c3e50 }), // Wolf
-    brown: new THREE.MeshStandardMaterial({ color: 0x795548 }), // Dog
-    fire: new THREE.MeshBasicMaterial({ color: 0xffaa00 })
+    rock: new THREE.MeshStandardMaterial({ color: 0x808080 }),
+    fox: new THREE.MeshStandardMaterial({ color: 0xD2691E }),
+    rabbit: new THREE.MeshStandardMaterial({ color: 0xFFFFFF })
 };
 
-// --- BUILDER FUNCTIONS ---
+const updateList = []; // Array for animated objects (animals, water)
 
-function createSheep(x, z) {
-    const g = new THREE.Group();
-    // Body (Wooly)
-    const body = new THREE.Mesh(new THREE.DodecahedronGeometry(0.6), mats.gray);
-    body.position.y = 0.6;
-    body.scale.set(1, 0.8, 1.4);
-    body.castShadow = true;
-    g.add(body);
-    // Head
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.4), new THREE.MeshStandardMaterial({color:0x333333}));
-    head.position.set(0, 0.9, 0.6);
-    g.add(head);
+function createTree(type, x, z) {
+    const group = new THREE.Group();
+    const trunkH = type === 'palm' ? 4 : 2.5;
     
-    setupEntity(g, x, z, 'sheep');
-}
+    // Trunk
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.5, trunkH, 6), mats.wood);
+    trunk.position.y = trunkH/2;
+    trunk.castShadow = true;
+    group.add(trunk);
 
-function createDuck(x, z) {
-    const g = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.25, 0.6), mats.white);
-    body.position.y = 0.15;
-    g.add(body);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.15), new THREE.MeshStandardMaterial({color:0x2ecc71})); // Green head duck
-    head.position.set(0, 0.4, 0.2);
-    g.add(head);
-    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.2, 4), mats.orange);
-    beak.rotation.x = Math.PI/2;
-    beak.position.set(0, 0.4, 0.4);
-    g.add(beak);
-    
-    setupEntity(g, x, z, 'duck');
-}
-
-function createDog(x, z) {
-    const g = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.9), mats.brown);
-    body.position.y = 0.5;
-    g.add(body);
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), mats.brown);
-    head.position.set(0, 0.8, 0.45);
-    g.add(head);
-    // Ears
-    const ear = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.15, 0.1), mats.brown);
-    ear.position.set(0, 1.05, 0.45);
-    g.add(ear);
-    
-    setupEntity(g, x, z, 'dog');
-}
-
-function createWolf(x, z) {
-    const g = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.6, 1.1), mats.darkGray);
-    body.position.y = 0.6;
-    g.add(body);
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.6), mats.darkGray);
-    head.position.set(0, 0.9, 0.6);
-    g.add(head);
-    // Glowing Eyes
-    const eyes = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.05, 0.05), mats.fire);
-    eyes.position.set(0, 1.0, 0.9);
-    g.add(eyes);
-
-    setupEntity(g, x, z, 'wolf');
-}
-
-function createRabbit(x, z) {
-    const g = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.DodecahedronGeometry(0.25), mats.white);
-    body.position.y = 0.25;
-    g.add(body);
-    const ears = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.05), mats.white);
-    ears.position.set(0, 0.5, 0);
-    g.add(ears);
-    setupEntity(g, x, z, 'rabbit');
-}
-
-function createFox(x, z) {
-    const g = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.35, 0.8), mats.orange);
-    body.position.y = 0.35;
-    g.add(body);
-    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.6), mats.orange);
-    tail.position.set(0, 0.5, -0.6);
-    tail.rotation.x = 0.5;
-    g.add(tail);
-    const head = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.5, 4), mats.orange);
-    head.rotation.x = -Math.PI/2;
-    head.position.set(0, 0.5, 0.5);
-    g.add(head);
-    setupEntity(g, x, z, 'fox');
-}
-
-function createCat(x, z) {
-    const g = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.6), new THREE.MeshStandardMaterial({color:0x222}));
-    body.position.y = 0.3;
-    g.add(body);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.2), new THREE.MeshStandardMaterial({color:0x222}));
-    head.position.set(0, 0.5, 0.3);
-    g.add(head);
-    setupEntity(g, x, z, 'cat');
-}
-
-function createCarrot(x, z) {
-    const g = new THREE.Group();
-    const root = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.4, 8), mats.orange);
-    root.rotation.x = Math.PI;
-    root.position.y = 0.2;
-    g.add(root);
-    const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.3, 4), mats.leaf);
-    leaf.position.y = 0.4;
-    g.add(leaf);
-    
-    // Add to interactive list but NOT animal list
-    g.position.set(x, 0, z);
-    g.userData = { type: 'carrot', id: Math.random() };
-    scene.add(g);
-    entities.push(g);
-}
-
-function createFence(x, z) {
-    const g = new THREE.Group();
-    const post1 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1, 0.2), mats.wood);
-    const post2 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 1, 0.2), mats.wood);
-    const rail = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.2, 0.1), mats.wood);
-    post1.position.set(-0.6, 0.5, 0);
-    post2.position.set(0.6, 0.5, 0);
-    rail.position.set(0, 0.7, 0);
-    g.add(post1); g.add(post2); g.add(rail);
-    
-    g.position.set(x, 0, z);
-    g.userData = { type: 'fence', id: Math.random() };
-    scene.add(g);
-    entities.push(g);
-}
-
-function createBonfire(x, z) {
-    const g = new THREE.Group();
-    // Logs
-    for(let i=0; i<3; i++) {
-        const log = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 1, 5), mats.wood);
-        log.rotation.z = Math.PI/2;
-        log.rotation.y = i * (Math.PI/3);
-        log.position.y = 0.1;
-        g.add(log);
-    }
-    // Light
-    const fireLight = new THREE.PointLight(0xffaa00, 2, 15);
-    fireLight.position.y = 1;
-    fireLight.castShadow = true;
-    g.add(fireLight);
-
-    g.position.set(x, 0, z);
-    g.userData = { type: 'bonfire', id: Math.random() };
-    scene.add(g);
-    entities.push(g);
-}
-
-function createPond(x, z) {
-    const pond = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 0.1, 12), mats.water);
-    pond.position.set(x, 0.05, z);
-    pond.userData = { type: 'pond', id: Math.random() };
-    scene.add(pond);
-    entities.push(pond);
-}
-
-function createTree(x, z, type) {
-    const g = new THREE.Group();
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.5, 3, 6), mats.wood);
-    trunk.position.y = 1.5;
-    g.add(trunk);
-    
+    // Leaves
     let leaf;
     if(type === 'pine') {
-        leaf = new THREE.Mesh(new THREE.ConeGeometry(2, 5, 8), mats.leaf);
-        leaf.position.y = 3.5;
-    } else {
-        leaf = new THREE.Mesh(new THREE.DodecahedronGeometry(1.5), mats.leaf);
+        leaf = new THREE.Mesh(new THREE.ConeGeometry(1.5, 4, 8), mats.leafPine);
         leaf.position.y = 3;
+    } else if (type === 'palm') {
+        leaf = new THREE.Group();
+        for(let i=0; i<6; i++) {
+            const b = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 3), mats.leafPalm);
+            b.position.y = 4;
+            b.rotation.y = (i/6)*Math.PI*2;
+            b.rotation.x = 0.4;
+            b.translateZ(1.2);
+            leaf.add(b);
+        }
+    } else { // Oak
+        leaf = new THREE.Mesh(new THREE.DodecahedronGeometry(1.5), mats.leafOak);
+        leaf.position.y = 3;
+        leaf.scale.set(1.5, 1, 1.5);
     }
-    g.add(leaf);
+    leaf.castShadow = true;
+    group.add(leaf);
+
+    // Pop Animation
+    group.scale.set(0,0,0);
+    updateList.push({ type: 'growth', obj: group, target: 1 + Math.random()*0.5 });
     
-    g.position.set(x, 0, z);
-    g.userData = { type: type, id: Math.random() };
-    scene.add(g);
-    entities.push(g);
+    group.position.set(x, 0, z);
+    scene.add(group);
 }
 
-// Helper to init animals
-function setupEntity(mesh, x, z, type) {
-    mesh.position.set(x, 0, z);
-    mesh.userData = { 
-        type: type, 
-        id: Math.random(),
+function createWater(type, x, z) {
+    if(type === 'pond') {
+        const pond = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 0.2, 16), mats.water);
+        pond.position.set(x, 0.1, z);
+        scene.add(pond);
+    } else if (type === 'waterfall') {
+        const group = new THREE.Group();
+        // Cliff
+        const cliff = new THREE.Mesh(new THREE.BoxGeometry(4, 6, 3), mats.rock);
+        cliff.position.y = 3;
+        group.add(cliff);
+        // Water
+        const w = new THREE.Mesh(new THREE.BoxGeometry(2, 6, 0.5), mats.water);
+        w.position.set(0, 3, 1.6);
+        group.add(w);
+        // Particle System
+        const particles = [];
+        const pGeo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+        group.userData.update = () => {
+            if(Math.random() > 0.5) {
+                const p = new THREE.Mesh(pGeo, mats.water);
+                p.position.set((Math.random()-0.5)*1.5, 6, 1.8);
+                group.add(p);
+                particles.push(p);
+            }
+            for(let i=particles.length-1; i>=0; i--) {
+                const p = particles[i];
+                p.position.y -= 0.2;
+                if(p.position.y < 0) {
+                    group.remove(p);
+                    particles.splice(i, 1);
+                }
+            }
+        };
+        updateList.push({ type: 'custom', obj: group });
+        group.position.set(x, 0, z);
+        scene.add(group);
+    }
+}
+
+function createAnimal(type, x, z) {
+    const group = new THREE.Group();
+    const mat = type === 'fox' ? mats.fox : mats.rabbit;
+    
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.4, 0.8), mat);
+    body.position.y = 0.4;
+    body.castShadow = true;
+    group.add(body);
+    
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), mat);
+    head.position.set(0, 0.7, 0.5);
+    head.castShadow = true;
+    group.add(head);
+
+    group.position.set(x, 0, z);
+    
+    // AI Data
+    group.userData = {
         state: 'idle',
-        goal: new THREE.Vector3(x,0,z),
+        goal: new THREE.Vector3(x, 0, z),
         wait: 0
     };
-    mesh.castShadow = true;
-    scene.add(mesh);
-    entities.push(mesh);
-    animals.push(mesh);
-}
-
-// --- 5. LOGIC & AI ---
-
-function handleNightSpawns() {
-    // Only spawn wolves once per night start
-    if (isNight && scene.children.filter(c => c.userData.type === 'wolf').length === 0) {
-        for(let i=0; i<3; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            createWolf(Math.cos(angle)*60, Math.sin(angle)*60);
-        }
-        nightKills.count = 0; // Reset kill counter
-    }
     
-    // Despawn wolves at day
-    if (!isNight) {
-        const wolves = entities.filter(e => e.userData.type === 'wolf');
-        wolves.forEach(w => removeEntity(w));
-    }
+    updateList.push({ type: 'ai', obj: group, speed: type==='fox'?0.05:0.03 });
+    scene.add(group);
 }
 
-function updateAI(dt) {
-    // Wake up dogs check
-    const dogsAlert = isNight && nightKills.count >= 2;
-
-    animals.forEach(anim => {
-        const data = anim.userData;
-        const pos = anim.position;
-
-        // SLEEP LOGIC
-        if (isNight && data.type !== 'wolf' && data.type !== 'dog') {
-            anim.rotation.z = Math.PI / 2; // Lie down
-            anim.position.y = 0.2;
-            return; // Skip movement
-        }
-        if (isNight && data.type === 'dog' && !dogsAlert) {
-            anim.rotation.z = Math.PI / 2; // Dog sleeps unless alert
-            anim.position.y = 0.2;
-            return;
-        }
-
-        // Wake up animation reset
-        if (anim.rotation.z !== 0) {
-            anim.rotation.z = 0;
-            anim.position.y = (data.type === 'sheep' || data.type === 'wolf') ? 0.6 : 0.4;
-        }
-
-        // --- BEHAVIOR TREE ---
-        let speed = 0.05;
-        let target = null;
-
-        // 1. WOLF BEHAVIOR (Night Hunter)
-        if (data.type === 'wolf') {
-            // Flee from dogs if alert
-            if (dogsAlert) {
-                const dog = findNearest(pos, 'dog');
-                if (dog) {
-                    target = pos.clone().sub(dog.position).normalize().multiplyScalar(10).add(pos);
-                    speed = 0.15; // Run fast
-                }
-            } else {
-                // Hunt
-                const prey = findNearest(pos, ['sheep', 'rabbit', 'cat']);
-                if (prey) {
-                    target = prey.position;
-                    speed = 0.1;
-                    if (pos.distanceTo(target) < 1.5) {
-                        removeEntity(prey);
-                        nightKills.count++;
-                    }
-                }
-            }
-        }
-
-        // 2. FOX BEHAVIOR (Day Hunter)
-        else if (data.type === 'fox') {
-            // Flee from Dog
-            const dog = findNearest(pos, 'dog');
-            if (dog && pos.distanceTo(dog.position) < 10) {
-                target = pos.clone().sub(dog.position).normalize().multiplyScalar(10).add(pos);
-                speed = 0.12;
-            } else {
-                // Hunt Rabbit/Sheep
-                const prey = findNearest(pos, ['rabbit', 'sheep']);
-                if (prey) {
-                    target = prey.position;
-                    speed = 0.08;
-                    if (pos.distanceTo(target) < 1) removeEntity(prey);
-                }
-            }
-        }
-
-        // 3. DOG BEHAVIOR (Protector)
-        else if (data.type === 'dog') {
-            const threat = findNearest(pos, ['fox', 'wolf']);
-            if (threat) {
-                target = threat.position;
-                speed = 0.11; // Chase
-            }
-        }
-
-        // 4. RABBIT BEHAVIOR (Thief)
-        else if (data.type === 'rabbit') {
-            const carrot = findNearest(pos, 'carrot');
-            if (carrot) {
-                target = carrot.position;
-                if (pos.distanceTo(target) < 1) {
-                    removeEntity(carrot); // Eat carrot
-                }
-            }
-            // Flee from Fox/Wolf
-            const pred = findNearest(pos, ['fox', 'wolf']);
-            if (pred && pos.distanceTo(pred.position) < 8) {
-                target = pos.clone().sub(pred.position).normalize().multiplyScalar(10).add(pos);
-                speed = 0.15;
-            }
-        }
-        
-        // 5. SHEEP/CAT/DUCK (Wander or Flee)
-        else {
-             const pred = findNearest(pos, ['fox', 'wolf']);
-             if (pred && pos.distanceTo(pred.position) < 8) {
-                target = pos.clone().sub(pred.position).normalize().multiplyScalar(8).add(pos);
-                speed = 0.1;
-             } else if (data.type === 'duck') {
-                 // Stay near water? (Simplified: just wander)
-             }
-        }
-
-        // MOVEMENT EXECUTION
-        if (target) {
-            anim.lookAt(target.x, anim.position.y, target.z);
-            const dir = new THREE.Vector3().subVectors(target, pos).normalize();
-            
-            // Fence Collision Check (Simple)
-            const nextPos = pos.clone().add(dir.multiplyScalar(speed));
-            if (!checkCollision(nextPos)) {
-                anim.position.add(dir.multiplyScalar(speed));
-            }
-        } else {
-            // Random Wander
-            if (data.wait > 0) {
-                data.wait--;
-            } else {
-                if (Math.random() > 0.98) {
-                    const angle = Math.random() * Math.PI * 2;
-                    data.goal.set(pos.x + Math.cos(angle)*5, 0, pos.z + Math.sin(angle)*5);
-                    data.wait = 60;
-                }
-                anim.lookAt(data.goal.x, anim.position.y, data.goal.z);
-                anim.position.lerp(data.goal, 0.01);
-            }
-        }
-    });
-}
-
-function findNearest(pos, types) {
-    let nearest = null;
-    let minDist = 999;
-    
-    // Check animals
-    animals.forEach(a => {
-        if (Array.isArray(types) ? types.includes(a.userData.type) : a.userData.type === types) {
-            const d = pos.distanceTo(a.position);
-            if (d < minDist) { minDist = d; nearest = a; }
-        }
-    });
-
-    // Check static entities (Carrots)
-    if (types === 'carrot' || (Array.isArray(types) && types.includes('carrot'))) {
-        entities.forEach(e => {
-            if (e.userData.type === 'carrot') {
-                const d = pos.distanceTo(e.position);
-                if (d < minDist) { minDist = d; nearest = e; }
-            }
-        });
-    }
-
-    return nearest;
-}
-
-function checkCollision(pos) {
-    // Very simple check: is there a fence too close?
-    for (let e of entities) {
-        if (e.userData.type === 'fence') {
-            if (pos.distanceTo(e.position) < 0.8) return true;
-        }
-    }
-    return false;
-}
-
-function removeEntity(obj) {
-    scene.remove(obj);
-    const idx = entities.indexOf(obj);
-    if (idx > -1) entities.splice(idx, 1);
-    const aIdx = animals.indexOf(obj);
-    if (aIdx > -1) animals.splice(aIdx, 1);
-}
-
-// --- 6. INTERACTION ---
+// --- 5. Interaction ---
 let currentTool = 'oak';
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
+let isDragging = false; // To distinguish between drag-cam and tap
 
+// Toolbar Logic
 document.querySelectorAll('.tool-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
         e.currentTarget.classList.add('active');
         currentTool = e.currentTarget.dataset.type;
-        document.getElementById('instruction-toast').innerText = currentTool === 'eraser' ? "Tap an object to delete!" : "Tap ground to place!";
     });
 });
 
-document.getElementById('clear-all-btn').addEventListener('click', () => {
-    if(confirm("Destroy everything?")) location.reload();
+document.getElementById('clear-btn').addEventListener('click', () => {
+    if(confirm("Clear ecosystem?")) location.reload();
 });
 
+// Touch/Click Logic
 const canvas = document.getElementById('canvas-container');
+
+canvas.addEventListener('pointerdown', () => isDragging = false);
+canvas.addEventListener('pointermove', () => isDragging = true);
 canvas.addEventListener('pointerup', (e) => {
-    // Simple click check
+    if(isDragging) return; // Camera moved, don't build
+
+    // Normalize mouse
     const rect = renderer.domElement.getBoundingClientRect();
     mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
     raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObject(groundMesh);
 
-    // ERASER LOGIC
-    if (currentTool === 'eraser') {
-        const intersects = raycaster.intersectObjects(entities, true);
-        if (intersects.length > 0) {
-            // Find the root group of the object
-            let target = intersects[0].object;
-            while(target.parent && target.parent !== scene) target = target.parent;
-            removeEntity(target);
-        }
-        return;
-    }
-
-    // BUILD LOGIC
-    const intersects = raycaster.intersectObject(ground);
-    if (intersects.length > 0) {
-        const p = intersects[0].point;
-        if(currentTool === 'oak' || currentTool === 'pine') createTree(p.x, p.z, currentTool);
-        else if(currentTool === 'sheep') createSheep(p.x, p.z);
-        else if(currentTool === 'duck') createDuck(p.x, p.z);
-        else if(currentTool === 'dog') createDog(p.x, p.z);
-        else if(currentTool === 'fox') createFox(p.x, p.z);
-        else if(currentTool === 'rabbit') createRabbit(p.x, p.z);
-        else if(currentTool === 'cat') createCat(p.x, p.z);
-        else if(currentTool === 'carrot') createCarrot(p.x, p.z);
-        else if(currentTool === 'fence') createFence(p.x, p.z);
-        else if(currentTool === 'bonfire') createBonfire(p.x, p.z);
-        else if(currentTool === 'pond') createPond(p.x, p.z);
+    if(intersects.length > 0) {
+        const pt = intersects[0].point;
+        buildItem(pt.x, pt.z);
     }
 });
 
-// --- 7. ANIMATION ---
+function buildItem(x, z) {
+    // Slight randomization
+    x += (Math.random()-0.5)*0.5;
+    z += (Math.random()-0.5)*0.5;
+
+    if(['oak','pine','palm'].includes(currentTool)) createTree(currentTool, x, z);
+    else if(['pond','waterfall'].includes(currentTool)) createWater(currentTool, x, z);
+    else if(['fox','rabbit'].includes(currentTool)) createAnimal(currentTool, x, z);
+    else if(currentTool === 'rock') {
+        const r = new THREE.Mesh(new THREE.DodecahedronGeometry(0.6), mats.rock);
+        r.position.set(x, 0.3, z);
+        r.castShadow = true;
+        scene.add(r);
+    }
+}
+
+// --- 6. Animation Loop ---
+let time = 0;
 function animate() {
     requestAnimationFrame(animate);
-    const dt = 0.016; // Approx 60fps
+    time += 0.01;
 
-    updateDayNight(dt);
-    updateAI(dt);
-    
-    // Wind
+    // 1. Vegetation Sway (Your requested logic)
     vegetation.forEach(v => {
-        const wind = Math.sin(gameTime * v.userData.speed + v.userData.phase) * 0.1;
+        const wind = Math.sin(time * v.userData.speed + v.userData.phase) * 0.1;
         v.rotation.x = v.userData.baseRot.x + wind;
+        v.rotation.z = v.userData.baseRot.z + (wind * 0.5);
+    });
+
+    // 2. Interactive Objects Update
+    updateList.forEach(item => {
+        // Growth pop-in
+        if(item.type === 'growth') {
+            if(item.obj.scale.x < item.target) item.obj.scale.addScalar(0.05);
+        }
+        // Waterfall Particles
+        if(item.type === 'custom') {
+            item.obj.userData.update();
+        }
+        // Animal AI
+        if(item.type === 'ai') {
+            const animal = item.obj;
+            // Hop animation
+            animal.position.y = Math.abs(Math.sin(time * 5)) * 0.3;
+            
+            if(animal.userData.state === 'idle') {
+                if(Math.random() > 0.99) {
+                    animal.userData.state = 'moving';
+                    const angle = Math.random() * Math.PI * 2;
+                    animal.userData.goal.set(
+                        animal.position.x + Math.cos(angle)*6,
+                        0,
+                        animal.position.z + Math.sin(angle)*6
+                    );
+                    animal.lookAt(animal.userData.goal);
+                }
+            } else {
+                const dir = new THREE.Vector3().subVectors(animal.userData.goal, animal.position).normalize();
+                animal.position.add(dir.multiplyScalar(item.speed));
+                if(animal.position.distanceTo(animal.userData.goal) < 0.5) {
+                    animal.userData.state = 'idle';
+                }
+            }
+        }
     });
 
     controls.update();
