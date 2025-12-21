@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EcoBuilder: Survival</title>
+    <title>EcoBuilder Sandbox</title>
     <link rel="stylesheet" href="gard.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
 </head>
@@ -13,35 +13,26 @@
 
     <div id="ui-layer">
         <header>
-            <div class="header-left">
-                <h1>🌍 EcoBuilder</h1>
-                <div id="time-display">☀️ DAY</div>
-            </div>
-            <button id="clear-all-btn" class="danger-btn">Nuke World</button>
+            <h1>🌍 EcoBuilder</h1>
+            <button id="clear-btn" class="danger-btn">🗑️ Clear</button>
         </header>
 
-        <div id="instruction-toast">Select a tool below!</div>
+        <div id="instruction-toast">Select an item below, then tap the grass to place it!</div>
 
         <div class="toolbar-wrapper">
             <div class="toolbar">
-                <div class="tool-btn danger-tool" data-type="eraser">🗑️<br>Eraser</div>
-                
                 <div class="tool-btn active" data-type="oak">🌳<br>Oak</div>
                 <div class="tool-btn" data-type="pine">🌲<br>Pine</div>
+                <div class="tool-btn" data-type="palm">🌴<br>Palm</div>
+                
                 <div class="tool-btn" data-type="pond">💧<br>Pond</div>
-                <div class="tool-btn" data-type="duck">🦆<br>Duck</div>
-
-                <div class="tool-btn" data-type="fence">🚧<br>Fence</div>
-                <div class="tool-btn" data-type="carrot">🥕<br>Carrot</div>
-                <div class="tool-btn" data-type="bonfire">🔥<br>Bonfire</div>
-                <div class="tool-btn" data-type="dog">🐕<br>Dog</div>
-
-                <div class="tool-btn" data-type="sheep">🐑<br>Sheep</div>
-                <div class="tool-btn" data-type="rabbit">🐇<br>Rabbit</div>
-                <div class="tool-btn" data-type="cat">🐈<br>Cat</div>
+                <div class="tool-btn" data-type="waterfall">🌊<br>Falls</div>
 
                 <div class="tool-btn" data-type="fox">🦊<br>Fox</div>
-                </div>
+                <div class="tool-btn" data-type="rabbit">🐇<br>Rabbit</div>
+
+                <div class="tool-btn" data-type="rock">🪨<br>Rock</div>
+            </div>
         </div>
     </div>
 
