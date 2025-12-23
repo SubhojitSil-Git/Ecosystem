@@ -1,4 +1,11 @@
 /* gard.css */
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+body {
+    font-family: 'VT323', monospace; /* This changes the font to pixel style */
+    font-size: 20px;
+}
+/* ... rest of your css */
 body {
     margin: 0;
     overflow: hidden;
@@ -6,111 +13,71 @@ body {
     background-color: #87CEEB;
     user-select: none;
     -webkit-user-select: none;
+    touch-action: none;
 }
 
-#canvas-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
+#canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+
+#night-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #000033; opacity: 0; pointer-events: none; z-index: 2;
+    transition: opacity 2s; mix-blend-mode: multiply;
 }
 
 #ui-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none; /* Pass clicks to 3D */
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    z-index: 10;
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; z-index: 10;
 }
 
 header {
-    padding: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    pointer-events: auto;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.2), transparent);
+    padding: 15px; display: flex; justify-content: space-between; align-items: flex-start; pointer-events: auto;
 }
 
-h1 {
-    margin: 0;
-    color: white;
-    font-size: 20px;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
+h1 { margin: 0; color: white; font-size: 20px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+#clock-display { color: white; font-weight: 700; background: rgba(0,0,0,0.3); padding: 5px 10px; border-radius: 10px; margin-top: 5px; display: inline-block;}
 
-.danger-btn {
-    background: #ff6b6b;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 20px;
-    color: white;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 4px 0 #c0392b;
+.action-btn {
+    border: none; padding: 10px 15px; border-radius: 12px; color: white; font-weight: 700; cursor: pointer; box-shadow: 0 4px 0 rgba(0,0,0,0.2); margin-left: 10px;
 }
-.danger-btn:active { transform: translateY(4px); box-shadow: none; }
+.action-btn:active { transform: translateY(4px); box-shadow: none; }
+.save-btn { background: #2ecc71; font-size: 10px; padding: 5px 10px; }
+.hidden { display: none; }
 
 #instruction-toast {
-    align-self: center;
-    background: rgba(0,0,0,0.6);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 14px;
-    backdrop-filter: blur(4px);
+    align-self: center; background: rgba(0,0,0,0.6); color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; backdrop-filter: blur(4px);
 }
 
-/* Toolbar */
-.toolbar-wrapper {
-    width: 100%;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
+/* CAMERA D-PAD */
+#camera-controls {
+    position: absolute;
+    right: 20px;
+    bottom: 120px; /* Above toolbar */
     pointer-events: auto;
-    padding-bottom: env(safe-area-inset-bottom);
-    border-top: 1px solid rgba(255,255,255,0.5);
-}
-
-.toolbar {
-    display: flex;
-    gap: 12px;
-    padding: 15px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch; /* Smooth scroll iOS */
-}
-
-/* Hide scrollbar */
-.toolbar::-webkit-scrollbar { display: none; }
-
-.tool-btn {
-    min-width: 60px;
-    height: 60px;
-    background: white;
-    border-radius: 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: 700;
-    color: #555;
-    border: 2px solid #eee;
-    cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    gap: 5px;
 }
+.dpad-row { display: flex; gap: 5px; }
+.dpad-btn {
+    width: 40px; height: 40px;
+    background: rgba(255, 255, 255, 0.8);
+    border: none; border-radius: 8px;
+    font-size: 18px; cursor: pointer;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.dpad-btn:active { background: white; transform: scale(0.95); }
 
-.tool-btn.active {
-    background: #e6fffa;
-    border-color: #00b894;
-    color: #00b894;
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0, 184, 148, 0.3);
+.toolbar-wrapper {
+    width: 100%; background: rgba(255, 255, 255, 0.95); pointer-events: auto; padding-bottom: env(safe-area-inset-bottom);
 }
+.toolbar { display: flex; gap: 8px; padding: 10px; overflow-x: auto; }
+.toolbar::-webkit-scrollbar { display: none; }
+
+.tool-btn {
+    min-width: 55px; height: 60px; background: white; border-radius: 12px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: #555; border: 2px solid #eee; cursor: pointer;
+}
+.tool-btn.active { background: #e6fffa; border-color: #00b894; color: #00b894; transform: translateY(-3px); }                        
