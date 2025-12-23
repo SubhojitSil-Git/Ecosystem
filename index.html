@@ -3,35 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EcoBuilder Sandbox</title>
+    <title>EcoSim: Living World</title>
     <link rel="stylesheet" href="gard.css">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
     <div id="canvas-container"></div>
+    <div id="night-overlay"></div>
 
     <div id="ui-layer">
         <header>
-            <h1>🌍 EcoBuilder</h1>
-            <button id="clear-btn" class="danger-btn">🗑️ Clear</button>
+            <div class="header-left">
+                <h1>🌍 EcoSim</h1>
+                <div id="clock-display">☀️ Day</div>
+                <button id="save-btn" class="action-btn save-btn">💾 Save</button>
+            </div>
+            <div class="header-right">
+                <button id="rotate-btn" class="action-btn hidden" style="background:#f1c40f">🔄 Rotate</button>
+                <button id="remove-mode-btn" class="action-btn" style="background:#e74c3c">🗑️ Remove</button>
+            </div>
         </header>
 
-        
+        <div id="camera-controls">
+            <div class="dpad-row">
+                <button id="cam-up" class="dpad-btn">⬆️</button>
+            </div>
+            <div class="dpad-row">
+                <button id="cam-left" class="dpad-btn">⬅️</button>
+                <button id="cam-right" class="dpad-btn">➡️</button>
+            </div>
+            <div class="dpad-row">
+                <button id="cam-down" class="dpad-btn">⬇️</button>
+            </div>
+        </div>
+
+        <div id="instruction-toast">Double Tap Grass to Spawn!</div>
 
         <div class="toolbar-wrapper">
             <div class="toolbar">
                 <div class="tool-btn active" data-type="oak">🌳<br>Oak</div>
                 <div class="tool-btn" data-type="pine">🌲<br>Pine</div>
-                <div class="tool-btn" data-type="palm">🌴<br>Palm</div>
+                <div class="tool-btn" data-type="rock">🪨<br>Rock</div>
                 
                 <div class="tool-btn" data-type="pond">💧<br>Pond</div>
                 <div class="tool-btn" data-type="waterfall">🌊<br>Falls</div>
 
-                <div class="tool-btn" data-type="fox">🦊<br>Fox</div>
-                <div class="tool-btn" data-type="rabbit">🐇<br>Rabbit</div>
+                <div class="tool-btn" data-type="carrot">🥕<br>Carrot</div>
+                <div class="tool-btn" data-type="fence">🚧<br>Fence</div>
+                <div class="tool-btn" data-type="bonfire">🔥<br>Bonfire</div>
 
-                <div class="tool-btn" data-type="rock">🪨<br>Rock</div>
+                <div class="tool-btn" data-type="duck">🦆<br>Duck</div>
+                <div class="tool-btn" data-type="chicken">🐔<br>Chicken</div>
+                <div class="tool-btn" data-type="rabbit">🐇<br>Rabbit</div>
+                <div class="tool-btn" data-type="sheep">🐑<br>Sheep</div>
+                <div class="tool-btn" data-type="cat">🐱<br>Cat</div>
+                <div class="tool-btn" data-type="dog">🐕<br>Dog</div>
+                <div class="tool-btn" data-type="fox">🦊<br>Fox</div>
+                <div class="tool-btn" data-type="wolf">🐺<br>Wolf</div>
             </div>
         </div>
     </div>
@@ -41,5 +70,3 @@
     <script src="gard.js"></script>
 </body>
 </html>
-
-
